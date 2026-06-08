@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategic Logistics Analytics – Arrowal Industries</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f4f5f7;
+    color: #1a1d23;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+  /* Top bar */
+  .topbar {
+    background: #fff;
+    border-bottom: 1px solid #e0e2e8;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 44px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 32px;
+    font-weight: 700;
+    font-size: 13px;
+    color: #e8a923;
+  }
+  .topbar-logo svg { width: 20px; height: 20px; }
+  .topbar-nav { display: flex; gap: 0; height: 100%; }
+  .topbar-nav a {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 12.5px;
+    color: #444;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .topbar-nav a.active { border-bottom-color: #e8a923; color: #1a1d23; font-weight: 600; }
+  .topbar-nav a:hover { color: #1a1d23; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #888; }
+  .btn-publish {
+    background: #e8a923; color: #fff; border: none; padding: 5px 14px;
+    border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+
+  /* Layout */
+  .page { padding: 20px 24px; max-width: 1280px; margin: 0 auto; }
+
+  /* Header */
+  .dash-header { margin-bottom: 16px; }
+  .dash-title { font-size: 20px; font-weight: 700; color: #1a1d23; }
+  .dash-sub { font-size: 12px; color: #888; margin-top: 2px; }
+
+  /* Filter bar */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .filter-label { font-size: 12px; color: #555; margin-right: 4px; }
+  .filter-btn {
+    padding: 5px 16px;
+    border-radius: 20px;
+    border: 1.5px solid #d0d2d8;
+    background: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: #444;
+    font-weight: 500;
+  }
+  .filter-btn.active { background: #e8a923; border-color: #e8a923; color: #fff; font-weight: 700; }
+  .filter-btn.green.active { background: #2e9e6e; border-color: #2e9e6e; color: #fff; }
+  .filter-btn.red.active { background: #c0392b; border-color: #c0392b; color: #fff; }
+  .filter-btn:hover:not(.active) { border-color: #aaa; }
+
+  /* KPI cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 600px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .kpi {
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e4e6ec;
+    padding: 14px 16px;
+  }
+  .kpi-label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #999; margin-bottom: 6px; }
+  .kpi-value { font-size: 22px; font-weight: 700; line-height: 1; margin-bottom: 5px; }
+  .kpi-value.gold { color: #e8a923; }
+  .kpi-value.blue { color: #2271b1; }
+  .kpi-value.green { color: #2e9e6e; }
+  .kpi-value.purple { color: #7c4dff; }
+  .kpi-value.red { color: #c0392b; }
+  .kpi-detail { font-size: 11px; color: #888; }
+  .kpi-badge { display: inline-block; font-size: 10px; margin-top: 3px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
+  .kpi-badge.up { background: #fdecea; color: #c0392b; }
+  .kpi-badge.down { background: #e6f7f1; color: #1a7a52; }
+
+  /* Charts grid */
+  .charts-top {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .charts-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  @media (max-width: 900px) {
+    .charts-top { grid-template-columns: 1fr; }
+    .charts-bottom { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e4e6ec;
+    padding: 16px;
+  }
+  .card-title { font-size: 12.5px; font-weight: 700; color: #1a1d23; margin-bottom: 2px; }
+  .card-sub { font-size: 11px; color: #aaa; margin-bottom: 14px; }
+
+  /* Donut legend */
+  .donut-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .donut-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
+    font-size: 12px;
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  /* GPS scatter */
+  .scatter-grid {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    background: #eef3fb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .scatter-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .scatter-axis-x {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #888;
+  }
+  .scatter-axis-y {
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    transform: translateY(-50%) rotate(-90deg);
+    font-size: 10px;
+    color: #888;
+    white-space: nowrap;
+  }
+  .gps-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: #666;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #e4e6ec;
+    margin-bottom: 20px;
+    margin-top: 8px;
+  }
+  .tab-btn {
+    padding: 8px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-size: 13px;
+    color: #888;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .tab-btn.active { color: #1a1d23; border-bottom-color: #e8a923; font-weight: 700; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Route detail table */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th {
+    background: #f7f8fa;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 1px solid #e4e6ec;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  td { padding: 8px 10px; border-bottom: 1px solid #f0f1f5; color: #333; }
+  tr:hover td { background: #f9fafc; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+  }
+  .badge-green { background: #e6f7f1; color: #1a7a52; }
+  .badge-red { background: #fdecea; color: #c0392b; }
+
+  .refreshed { font-size: 11px; color: #aaa; }
+</style>
+</head>
+<body>
+
+<!-- Power BI-like top bar -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 20 20" fill="none">
+      <rect x="1" y="10" width="4" height="9" rx="1" fill="#e8a923"/>
+      <rect x="7" y="6" width="4" height="13" rx="1" fill="#e8a923" opacity="0.8"/>
+      <rect x="13" y="2" width="4" height="17" rx="1" fill="#e8a923" opacity="0.6"/>
+    </svg>
+    Power BI Desktop
+  </div>
+  <nav class="topbar-nav">
+    <a class="active">Home</a>
+    <a>Insert</a>
+    <a>Modeling</a>
+    <a>View</a>
+    <a>Optimize</a>
+    <a>Help</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="refreshed">Last refreshed: today</span>
+    <button class="btn-publish">▲ Publish</button>
+  </div>
+</div>
+
+<div class="page">
+  <!-- Header -->
+  <div class="dash-header">
+    <div class="dash-title">Strategic Logistics Analytics</div>
+    <div class="dash-sub">Arrowal Industries · 1,000 Shipments · 2021–2023 · Kaggle Dynamic Supply Chain Dataset</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('main')">Main Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('route')">Route Detail</button>
+    <button class="tab-btn" onclick="switchTab('time')">Time Analysis</button>
+  </div>
+
+  <!-- MAIN DASHBOARD TAB -->
+  <div id="tab-main" class="tab-panel active">
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <span class="filter-label">Route Status (is_zombie_route):</span>
+      <button class="filter-btn active" onclick="setFilter('all', this)">All Routes</button>
+      <button class="filter-btn green" onclick="setFilter('profitable', this)">0 — Profitable</button>
+      <button class="filter-btn red" onclick="setFilter('zombie', this)">1 — Zombie</button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Integrated Total Cost</div>
+        <div class="kpi-value gold">₺320.52</div>
+        <div class="kpi-detail">avg per shipment</div>
+        <div class="kpi-detail" style="margin-top:3px;">▲ direct + fuel cost</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Fuel-to-Margin Ratio</div>
+        <div class="kpi-value blue">17.77%</div>
+        <div class="kpi-detail">avg · 55% = danger</div>
+        <span class="kpi-badge up">49 routes breach 55%</span>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">CPK (Cost per KM)</div>
+        <div class="kpi-value green">₺0.265</div>
+        <div class="kpi-detail">avg · short-haul ₺2.59</div>
+        <span class="kpi-badge down">▲ 13× short vs long</span>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Inefficiency Score</div>
+        <div class="kpi-value purple">65.6</div>
+        <div class="kpi-detail">avg · 0–100 scale</div>
+        <div class="kpi-detail" style="margin-top:3px;">● route risk index</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Hidden Loss Gap</div>
+        <div class="kpi-value red">₺46,437</div>
+        <div class="kpi-detail">total cumulative</div>
+        <span class="kpi-badge up">▼ Q3 peak: ₺12,979</span>
+      </div>
+    </div>
+
+    <!-- Top charts row -->
+    <div class="charts-top">
+      <!-- Donut -->
+      <div class="card">
+        <div class="card-title">Zombie Route Distribution</div>
+        <div class="card-sub">is_zombie_route · Tile Slicer linked</div>
+        <div class="donut-wrap">
+          <div style="position:relative; width:180px; height:180px;">
+            <canvas id="donutChart" role="img" aria-label="Donut chart: 914 profitable routes (green), 86 zombie routes (red)">914 profitable, 86 zombie routes.</canvas>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+              <div style="font-size:26px;font-weight:700;color:#1a1d23;">86</div>
+              <div style="font-size:11px;color:#888;">Zombie Routes</div>
+            </div>
+          </div>
+          <div class="donut-legend">
+            <span><span class="legend-dot" style="background:#2e9e6e;"></span>Profitable (914)</span>
+            <span><span class="legend-dot" style="background:#c0392b;"></span>Zombie (86)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Line chart -->
+      <div class="card">
+        <div class="card-title">Fuel-to-Margin Ratio by Quarter</div>
+        <div class="card-sub">Critical 55% threshold · dim_time N:1 relationship</div>
+        <div style="position:relative;width:100%;height:220px;">
+          <canvas id="lineChart" role="img" aria-label="Line chart of fuel-to-margin ratio by quarter Q1-2021 through Q4-2023, staying around 17-22%, well below 55% danger threshold">Fuel-to-margin ratio stays around 17–22% across all quarters, well below the 55% threshold.</canvas>
+        </div>
+        <div class="donut-legend" style="margin-top:8px;">
+          <span><span class="legend-dot" style="background:#2271b1;border-radius:50%;"></span>Fuel-to-Margin Ratio (%)</span>
+          <span><span class="legend-dot" style="background:#c0392b;border-radius:0;height:2px;width:16px;margin-bottom:4px;"></span>55% Danger Threshold</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom charts row -->
+    <div class="charts-bottom">
+      <!-- CPK bar -->
+      <div class="card">
+        <div class="card-title">CPK by Distance Band</div>
+        <div class="card-sub">Short-haul 13× more expensive per km</div>
+        <div style="position:relative;width:100%;height:200px;">
+          <canvas id="cpkChart" role="img" aria-label="Horizontal bar chart: CPK under 200km is highest at 2.59, 200-500km 1.05, 500-1000km 0.44, over 1000km 0.19">CPK decreases with distance: &lt;200km ₺2.59, 200–500km ₺1.05, 500–1000km ₺0.44, &gt;1000km ₺0.19.</canvas>
+        </div>
+      </div>
+
+      <!-- Hidden loss bar -->
+      <div class="card">
+        <div class="card-title">Hidden Loss Gap by Quarter</div>
+        <div class="card-sub">Q3 peak ₺12,979 · dim_time filter</div>
+        <div style="position:relative;width:100%;height:200px;">
+          <canvas id="lossChart" role="img" aria-label="Bar chart of hidden loss gap by quarter: Q1 11951, Q2 12323, Q3 12979 (peak, highlighted red), Q4 9185">Q1: ₺11,951 · Q2: ₺12,323 · Q3: ₺12,979 (peak) · Q4: ₺9,185.</canvas>
+        </div>
+      </div>
+
+      <!-- GPS scatter -->
+      <div class="card">
+        <div class="card-title">GPS Traffic-Light Map</div>
+        <div class="card-sub">Lat × Lon · Green = Profitable · Red = Zombie</div>
+        <div class="scatter-grid" id="scatterMap" role="img" aria-label="Scatter plot of GPS coordinates colored by route profitability. Green dots (profitable) spread widely, red dots (zombie) cluster in lower-left region.">
+          <span class="scatter-axis-y">Latitude</span>
+          <span class="scatter-axis-x">Longitude (proxy)</span>
+        </div>
+        <div class="gps-legend">
+          <span><span class="legend-dot" style="width:9px;height:9px;border-radius:50%;background:#2e9e6e;display:inline-block;margin-right:4px;vertical-align:middle;"></span>Profitable (914)</span>
+          <span><span class="legend-dot" style="width:9px;height:9px;border-radius:50%;background:#c0392b;display:inline-block;margin-right:4px;vertical-align:middle;"></span>Zombie (86)</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-main -->
+
+  <!-- ROUTE DETAIL TAB -->
+  <div id="tab-route" class="tab-panel">
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-title" style="margin-bottom:12px;">Route Performance Detail</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Route ID</th>
+            <th>Distance (km)</th>
+            <th>CPK (₺)</th>
+            <th>Fuel Ratio (%)</th>
+            <th>Ineff. Score</th>
+            <th>Hidden Loss (₺)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="routeTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TIME ANALYSIS TAB -->
+  <div id="tab-time" class="tab-panel">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="card">
+        <div class="card-title">Quarterly Cost Trend (₺ avg)</div>
+        <div class="card-sub">All routes · 2021–2023</div>
+        <div style="position:relative;width:100%;height:240px;">
+          <canvas id="costTrendChart" role="img" aria-label="Line chart of quarterly average cost per shipment from Q1 2021 to Q4 2023">Average cost per shipment by quarter 2021–2023.</canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Zombie vs Profitable Count by Quarter</div>
+        <div class="card-sub">Stacked by route status</div>
+        <div style="position:relative;width:100%;height:240px;">
+          <canvas id="stackedChart" role="img" aria-label="Stacked bar chart showing profitable and zombie route counts per quarter">Profitable vs zombie route counts by quarter.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// --- DATA ---
+const quarters = ['Q1-21','Q2-21','Q3-21','Q4-21','Q1-22','Q2-22','Q3-22','Q4-22','Q1-23','Q2-23','Q3-23','Q4-23'];
+const fuelRatios = [18.2,19.4,19.1,18.7,19.8,20.1,20.5,19.3,21.2,19.8,21.8,22.5];
+const costTrend = [305,318,322,311,328,335,340,319,345,332,351,362];
+
+// --- CHARTS ---
+// Donut
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Profitable','Zombie'],
+    datasets:[{ data:[914,86], backgroundColor:['#2e9e6e','#c0392b'], borderWidth:0, hoverOffset:4 }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false, cutout:'68%',
+    plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw}`}} }
+  }
+});
+
+// Line chart
+new Chart(document.getElementById('lineChart'),{
+  type:'line',
+  data:{
+    labels:quarters,
+    datasets:[
+      { label:'Fuel-to-Margin Ratio (%)', data:fuelRatios, borderColor:'#2271b1', backgroundColor:'rgba(34,113,177,0.07)', tension:0.35, borderWidth:2, pointRadius:4, pointBackgroundColor:'#2271b1', fill:true },
+      { label:'55% Danger Threshold', data:Array(12).fill(55), borderColor:'#c0392b', borderDash:[6,4], borderWidth:1.5, pointRadius:0, fill:false }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{ y:{min:0,max:70,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#f0f1f5'}}, x:{ticks:{font:{size:10}},grid:{display:false}} },
+    plugins:{ legend:{display:false} }
+  }
+});
+
+// CPK horizontal bar
+new Chart(document.getElementById('cpkChart'),{
+  type:'bar',
+  data:{
+    labels:['< 200 km','200–500 km','500–1000 km','> 1000 km'],
+    datasets:[{ label:'CPK (₺)', data:[2.59,1.05,0.44,0.19], backgroundColor:['#c0392b','#e8a923','#e8a923','#2e9e6e'], borderRadius:3, borderSkipped:false }]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    scales:{ x:{ticks:{callback:v=>'₺'+v,font:{size:10}},grid:{color:'#f0f1f5'},max:3.2}, y:{ticks:{font:{size:10}},grid:{display:false}} },
+    plugins:{ legend:{display:false}, datalabels:{display:false},
+      tooltip:{callbacks:{label:ctx=>' ₺'+ctx.raw}} }
+  }
+});
+
+// Hidden loss bar
+new Chart(document.getElementById('lossChart'),{
+  type:'bar',
+  data:{
+    labels:['Q1','Q2','Q3','Q4'],
+    datasets:[{ label:'Hidden Loss (₺)', data:[11951,12323,12979,9185], backgroundColor:['#2271b1','#2271b1','#c0392b','#2271b1'], borderRadius:4 }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{ y:{ticks:{callback:v=>v>=1000?(v/1000).toFixed(0)+'K':v,font:{size:10}},grid:{color:'#f0f1f5'}}, x:{ticks:{font:{size:11}},grid:{display:false}} },
+    plugins:{ legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>' ₺'+ctx.raw.toLocaleString()}} }
+  }
+});
+
+// GPS scatter
+function buildScatter() {
+  const map = document.getElementById('scatterMap');
+  const profitable = [
+    [12,82],[18,75],[22,68],[28,88],[35,72],[40,65],[44,78],[50,85],[55,62],[60,80],
+    [65,72],[70,68],[75,82],[80,55],[85,78],[88,65],[92,88],[95,72],[30,58],[38,82],
+    [45,70],[52,85],[58,62],[63,75],[68,88],[73,65],[78,78],[83,58],[87,82],[90,68],
+    [15,55],[20,78],[25,65],[32,85],[42,58],[48,72],[56,82],[62,68],[67,85],[72,75]
+  ];
+  const zombie = [
+    [8,22],[12,30],[18,18],[22,35],[28,25],[32,18],[14,38],[20,28],[25,15],[30,32],
+    [10,42],[16,25],[22,40],[27,20],[33,35]
+  ];
+  [...profitable.map(p=>({p,cls:'#2e9e6e'})), ...zombie.map(p=>({p,cls:'#c0392b'}))].forEach(({p,cls})=>{
+    const dot = document.createElement('div');
+    dot.className='scatter-dot';
+    dot.style.left=p[0]+'%';
+    dot.style.top=(100-p[1])+'%';
+    dot.style.background=cls;
+    dot.style.opacity='0.85';
+    map.appendChild(dot);
+  });
+}
+buildScatter();
+
+// Cost trend
+new Chart(document.getElementById('costTrendChart'),{
+  type:'line',
+  data:{
+    labels:quarters,
+    datasets:[{ label:'Avg Cost (₺)', data:costTrend, borderColor:'#7c4dff', backgroundColor:'rgba(124,77,255,0.07)', tension:0.35, borderWidth:2, pointRadius:3, fill:true }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{ y:{ticks:{callback:v=>'₺'+v,font:{size:10}},grid:{color:'#f0f1f5'},min:280}, x:{ticks:{font:{size:10}},grid:{display:false}} },
+    plugins:{ legend:{display:false} }
+  }
+});
+
+// Stacked bar
+const profitableQ = [76,78,74,79,80,76,78,77,77,75,78,80];
+const zombieQ = [7,7,7,7,8,7,7,6,7,7,7,8];
+new Chart(document.getElementById('stackedChart'),{
+  type:'bar',
+  data:{
+    labels:quarters,
+    datasets:[
+      { label:'Profitable', data:profitableQ, backgroundColor:'#2e9e6e', borderRadius:2 },
+      { label:'Zombie', data:zombieQ, backgroundColor:'#c0392b', borderRadius:2 }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{ x:{stacked:true,ticks:{font:{size:10}},grid:{display:false}}, y:{stacked:true,ticks:{font:{size:10}},grid:{color:'#f0f1f5'}} },
+    plugins:{ legend:{labels:{font:{size:11},boxWidth:10}} }
+  }
+});
+
+// Route table
+const routes = [
+  {id:'RT-0042',dist:145,cpk:2.59,fuel:62.1,ineff:88,loss:1820,zombie:true},
+  {id:'RT-0117',dist:380,cpk:1.05,fuel:18.4,ineff:42,loss:520,zombie:false},
+  {id:'RT-0233',dist:720,cpk:0.44,fuel:15.2,ineff:38,loss:310,zombie:false},
+  {id:'RT-0358',dist:1240,cpk:0.19,fuel:11.8,ineff:22,loss:120,zombie:false},
+  {id:'RT-0489',dist:90,cpk:3.21,fuel:71.3,ineff:94,loss:2340,zombie:true},
+  {id:'RT-0521',dist:560,cpk:0.41,fuel:16.9,ineff:35,loss:280,zombie:false},
+  {id:'RT-0634',dist:180,cpk:2.10,fuel:58.7,ineff:82,loss:1650,zombie:true},
+  {id:'RT-0712',dist:890,cpk:0.38,fuel:14.1,ineff:28,loss:210,zombie:false},
+  {id:'RT-0845',dist:1580,cpk:0.16,fuel:9.8,ineff:18,loss:85,zombie:false},
+  {id:'RT-0923',dist:130,cpk:2.75,fuel:65.2,ineff:90,loss:1980,zombie:true},
+];
+const tbody = document.getElementById('routeTable');
+routes.forEach(r=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><strong>${r.id}</strong></td>
+    <td>${r.dist}</td>
+    <td style="color:${r.cpk>2?'#c0392b':r.cpk>0.8?'#e8a923':'#2e9e6e'};font-weight:600;">₺${r.cpk.toFixed(2)}</td>
+    <td style="color:${r.fuel>55?'#c0392b':'#2e9e6e'};font-weight:600;">${r.fuel.toFixed(1)}%</td>
+    <td style="color:${r.ineff>75?'#c0392b':r.ineff>50?'#e8a923':'#2e9e6e'};">${r.ineff}</td>
+    <td>₺${r.loss.toLocaleString()}</td>
+    <td><span class="badge ${r.zombie?'badge-red':'badge-green'}">${r.zombie?'Zombie':'Profitable'}</span></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// --- FILTER ---
+function setFilter(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// --- TABS ---
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    b.classList.toggle('active', ['main','route','time'][i]===name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p=>{
+    p.classList.toggle('active', p.id==='tab-'+name);
+  });
+}
+</script>
+</body>
+</html>
